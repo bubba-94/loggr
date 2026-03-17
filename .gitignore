@@ -1,3 +1,8 @@
+# Repo specific
+loggr
+logs/
+build/
+
 # Prerequisites
 *.d
 
