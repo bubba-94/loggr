@@ -2,6 +2,7 @@
 loggr
 logs/
 build/
+main
 
 # Prerequisites
 *.d

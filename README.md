@@ -1,6 +1,6 @@
 # Moody Loggr
 
-> [!NOTES]
+> [!NOTE]
 > UNDER CONSTRUCTION
 
 ## Description
