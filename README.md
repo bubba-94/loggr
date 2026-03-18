@@ -15,4 +15,6 @@ Logging levels: Supports DEBUG, INFO, WARNING, ERROR, and FATAL.
 * - [x] File and console logging: Write logs to a file, the console, or both.
 * - [x] Configurable output: Supports appending to existing files or overwriting them.
 * - [x] Timestamped messages: Logs are automatically prepended with the current date and time.
-* - [] Async logging: Logs are enqueued and sent in batches every ish seconds.
+* - [x] Async logging: Logs are enqueued and processed accordingly.
+* - [-] Creation of just one log message
+* - [-] Integrate into existing application

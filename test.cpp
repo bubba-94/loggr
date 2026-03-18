@@ -1,22 +1,25 @@
 #include "moody/Loggr.hpp"
 
+using namespace moody;
+
 int main (){
+
+    struct Test{
+        double two;
+        int one;
+    };
+
+    Test test {2.0, 2};
+    int x = 1337;
+    double y = 0.0;
+    std::string z = "JOHAN";
     
-    moody::Loggr::LevelSeverity sev = moody::Loggr::LevelSeverity::DEBUG;
+    Loggr loggr("logs", "ppw", "output.txt", true, false, true);
 
-    moody::Loggr loggr("logs", "ppw", "output.txt", true, false);
-
-    loggr.msg("Hello", sev);
-    sev = moody::Loggr::LevelSeverity::INFO;
-    loggr.msg("My", sev);
-    sev = moody::Loggr::LevelSeverity::WARNING;
-    loggr.msg("Name", sev);
-    sev = moody::Loggr::LevelSeverity::ERROR;
-    loggr.msg("Is", sev);
-    sev = moody::Loggr::LevelSeverity::FATAL;
-    loggr.msg("Johan", sev);
-
-    loggr.write();
+    loggr.log(moody::Loggr::Level::INFO, "UI", "TESTING", {});
+    loggr.log(moody::Loggr::Level::TRACE, "APP", "TRACE", &test.one, {__FILE__, __LINE__});
+    loggr.log(moody::Loggr::Level::TRACE, "APP", "TRACE", &test.two, {__FILE__, __LINE__});
+    loggr.log(moody::Loggr::Level::TRACE, "APP", "TRACE", &x, {__FILE__, __LINE__});
 
     return 0;
 }
