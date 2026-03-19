@@ -8,6 +8,7 @@
 #include <iomanip>
 #include <array>
 #include <optional>
+#include <unordered_map>
 
 // Files
 #include <fstream>
@@ -60,7 +61,7 @@ public:
         std::string filename{};
         const int line{};
         
-        // Initialized in Log when T is present
+        // Assigned in Log when T is present
         const void* var_address{};
     };
 
@@ -114,23 +115,23 @@ public:
         }
     }
 
-    void log(const Level level, const std::string& module, const std::string& msg, const LogOptions& opts){
+    void log(const Level level, const std::string& module, const std::string& msg, const LogOptions& optionals){
 
-        LogOptions log_opts = opts;
-        LogMessage log = construct(level, module, msg, log_opts);
+        LogOptions log_optionals = optionals;
+        LogMessage log = construct(level, module, msg, log_optionals);
 
         // Push to queue
         push(log);
     }
 
     template <typename T>
-    void log(const Level level, const std::string& module, const std::string& msg, const T& variable, const LogOptions& opts){
+    void log(const Level level, const std::string& module, const std::string& msg, const T& variable, const LogOptions& optionals){
         // Create a string of address
-        LogOptions log_opts = opts;
+        LogOptions log_optionals = optionals;
 
-        log_opts.var_address = static_cast<const void*>(variable);
+        log_optionals.var_address = static_cast<const void*>(variable);
 
-        LogMessage log = construct(level, module, msg, log_opts);
+        LogMessage log = construct(level, module, msg, log_optionals);
 
         // Push to queue
         push(log);
@@ -155,117 +156,192 @@ private:
         }
     }
 
-    LogMessage construct(const Level level, const std::string& module, const std::string& output, const LogOptions& opts){
+    LogMessage construct(const Level level, const std::string& module, const std::string& output, const LogOptions& optionals){
         LogMessage log;
 
         switch (level){
 
-            case TRACE:    return log = trace(level, module, output, opts);
-            case DEBUG:    return log = debug(level, module, output, opts);
-            case INFO:     return log = info (level, module, output, opts);
-            case WARN:     return log = warn (level, module, output, opts);
-            case ERROR:    return log = error(level, module, output, opts);
-            case FATAL:    return log = fatal(level, module, output, opts);
+            case TRACE:    return log = trace(level, module, output, optionals);
+            case DEBUG:    return log = debug(level, module, output, optionals);
+            case INFO:     return log = info (level, module, output, optionals);
+            case WARN:     return log = warn (level, module, output, optionals);
+            case ERROR:    return log = error(level, module, output, optionals);
+            case FATAL:    return log = fatal(level, module, output, optionals);
 
-            default:       return log = debug(level, module, output, opts);
+            default:       return log = debug(level, module, output, optionals);
         }
     }
 
-    // All functions should create one message and later decide if printed to console or not
-    LogMessage info(const Level level,const std::string& module, const std::string& output, const LogOptions& opts){
+    LogMessage info(const Level level, const std::string& module, const std::string& output, const LogOptions& optionals){
         LogMessage temp_log;
-        if(m_cout){
-            LogMessage console;
-            if(m_coloring && m_cout){
-                const std::string ascii = " \033[" + std::to_string(getColor(level)) + "m";
-                console.message += ascii;
-            }
-            console.level = level;
-            console.message += timestamp();
-            console.message += toStr(level);
-            console.message += " [" + module + "]";
-            console.message += " log:";
-
-            console.message += output;
-            console.message += "\n";
-            // Reset coloring
-            console.message += "\033[0m";
-            std::cout << console.message;
-        }
-        
         temp_log.level = level;
-        temp_log.message += timestamp();
-        temp_log.message += toStr(level);
-        temp_log.message += " [" + module + "]";
-        temp_log.message += " log:";
-        temp_log.message += output;
-        temp_log.message += "\n";
-        // Reset coloring
 
-        // Wrapper with mutex
-        return temp_log;
-    }
-
-    LogMessage trace(const Level level, const std::string& module, const std::string &output, const LogOptions& opts){
-        LogMessage temp_log;
         std::ostringstream oss;
-        oss << opts.var_address;
 
-        if(m_cout){
-            LogMessage console;
-            if(m_coloring && m_cout){
-                const std::string ascii = " \033[" + std::to_string(getColor(level)) + "m";
-                console.message += ascii;
-            }
-            console.level = level;
-            console.message += timestamp();
-            console.message += toStr(level);
-            console.message += " [" + module + "] ";
-            console.message += " file:" + opts.filename + "(" + std::to_string(opts.line) + ")";
-            console.message += " @" + oss.str();
-            console.message += " log:";
-            console.message += output;
-            console.message += "\n";
-            // Reset coloring
-            console.message += "\033[0m";
-            std::cout << console.message;
-        }
+        oss << timestamp()
+            << toStr(level)
+            << "[" + module + "] "
+            << "log:" << output
+            << "\n";
 
-        if (m_cout){
-            if(m_coloring){
-                const std::string ascii = " \033[" + std::to_string(getColor(level)) + "m";
-                temp_log.message += ascii;
-            }
+        temp_log.message = oss.str();
+
+        if (m_cout && m_coloring){
+            const std::string color = "\033[" + std::to_string(getColor(level)) + "m";
+            const std::string reset = "\033[0m";
+            std::cout << color << temp_log.message << reset;
         }
-        
-        temp_log.level = level;
-        temp_log.message += timestamp();
-        temp_log.message += toStr(level);
-        temp_log.message += " [" + module + "] ";
-        temp_log.message += " file:" + opts.filename+ "(" + std::to_string(opts.line) + ")";        
-        temp_log.message += " @" + oss.str();
-        temp_log.message += " log:";
-        temp_log.message += output;
-        temp_log.message += "\n";
-        // Reset coloring
+        else if(m_cout && !m_coloring){
+            std::cout << temp_log.message;
+        }
 
         // Wrapper with mutex
         return temp_log;
     }
-    LogMessage debug(const Level level, const std::string& module, const std::string &output, const LogOptions& opts){
+
+    LogMessage trace(const Level level, const std::string& module, const std::string &output, const LogOptions& optionals){
         LogMessage temp_log;
+        temp_log.level = level;
+        
+        std::ostringstream oss;
+        
+        oss << timestamp()
+            << toStr(level)
+            << "[" << module << "] "
+            << "file:" << optionals.filename << "(" << std::to_string(optionals.line) << ") "
+            << optionals.var_address << " "
+            << "log:" << output 
+            << "\n";
+
+        // Constructed message from stream
+        temp_log.message = oss.str();
+
+        if (m_cout && m_coloring){
+            const std::string color = "\033[" + std::to_string(getColor(level)) + "m";
+            const std::string reset = "\033[0m";
+            std::cout << color << temp_log.message << reset;
+        }
+        else if(m_cout && !m_coloring){
+            std::cout << temp_log.message;
+        }
+
+        // Wrapper with mutex
         return temp_log;
     }
-    LogMessage warn(const Level level, const std::string& module, const std::string &output, const LogOptions& opts){
+    LogMessage debug(const Level level, const std::string& module, const std::string &output, const LogOptions& optionals){
         LogMessage temp_log;
+        temp_log.level = level;
+        
+        std::ostringstream oss;
+        
+        oss << timestamp()
+            << toStr(level)
+            << "[" << module << "] "
+            << "file:" << optionals.filename << "(" << std::to_string(optionals.line) << ") "
+            << optionals.var_address << " "
+            << "log:" << output 
+            << "\n";
+
+        // Constructed message from stream
+        temp_log.message = oss.str();
+
+        if (m_cout && m_coloring){
+            const std::string color = "\033[" + std::to_string(getColor(level)) + "m";
+            const std::string reset = "\033[0m";
+            std::cout << color << temp_log.message << reset;
+        }
+        else if(m_cout && !m_coloring){
+            std::cout << temp_log.message;
+        }
+
+        // Wrapper with mutex
         return temp_log;
     }
-    LogMessage error(const Level level, const std::string& module, const std::string &output, const LogOptions& opts){
+    LogMessage warn(const Level level, const std::string& module, const std::string &output, const LogOptions& optionals){
         LogMessage temp_log;
+        temp_log.level = level;
+        
+        std::ostringstream oss;
+        
+        oss << timestamp()
+            << toStr(level)
+            << "[" << module << "] "
+            << "file:" << optionals.filename << "(" << std::to_string(optionals.line) << ") "
+            << optionals.var_address << " "
+            << "log:" << output 
+            << "\n";
+
+        // Constructed message from stream
+        temp_log.message = oss.str();
+
+        if (m_cout && m_coloring){
+            const std::string color = "\033[" + std::to_string(getColor(level)) + "m";
+            const std::string reset = "\033[0m";
+            std::cout << color << temp_log.message << reset;
+        }
+        else if(m_cout && !m_coloring){
+            std::cout << temp_log.message;
+        }
+
+        // Wrapper with mutex
         return temp_log;
     }
-    LogMessage fatal(const Level level, const std::string& module, const std::string &output, const LogOptions& opts){
+    LogMessage error(const Level level, const std::string& module, const std::string &output, const LogOptions& optionals){
         LogMessage temp_log;
+        temp_log.level = level;
+        
+        std::ostringstream oss;
+        
+        oss << timestamp()
+            << toStr(level)
+            << "[" << module << "] "
+            << "file:" << optionals.filename << "(" << std::to_string(optionals.line) << ") "
+            << optionals.var_address << " "
+            << "log:" << output 
+            << "\n";
+
+        // Constructed message from stream
+        temp_log.message = oss.str();
+
+        if (m_cout && m_coloring){
+            const std::string color = "\033[" + std::to_string(getColor(level)) + "m";
+            const std::string reset = "\033[0m";
+            std::cout << color << temp_log.message << reset;
+        }
+        else if(m_cout && !m_coloring){
+            std::cout << temp_log.message;
+        }
+
+        // Wrapper with mutex
+        return temp_log;
+    }
+    LogMessage fatal(const Level level, const std::string& module, const std::string &output, const LogOptions& optionals){
+        LogMessage temp_log;
+        temp_log.level = level;
+        
+        std::ostringstream oss;
+        
+        oss << timestamp()
+            << toStr(level)
+            << "[" << module << "] "
+            << "file:" << optionals.filename << "(" << std::to_string(optionals.line) << ") "
+            << optionals.var_address << " "
+            << "log:" << output 
+            << "\n";
+
+        // Constructed message from stream
+        temp_log.message = oss.str();
+
+        if (m_cout && m_coloring){
+            const std::string color = "\033[" + std::to_string(getColor(level)) + "m";
+            const std::string reset = "\033[0m";
+            std::cout << color << temp_log.message << reset;
+        }
+        else if(m_cout && !m_coloring){
+            std::cout << temp_log.message;
+        }
+
+        // Wrapper with mutex
         return temp_log;
     }
 
@@ -286,20 +362,20 @@ private:
         auto now = std::chrono::system_clock::now();
         std::time_t now_c = std::chrono::system_clock::to_time_t(now);
 
-        stream << std::put_time(std::localtime(&now_c), "%Y-%m-%d %H:%M:%S") << " |";
+        stream << std::put_time(std::localtime(&now_c), "%Y-%m-%d %H:%M:%S") << " ";
 
         return stream.str();
     }
 
     std::string_view toStr(const Level level){
         switch(level){
-            case TRACE:     return " [TRACE] |";
-            case DEBUG:     return " [DEBUG] |";
-            case INFO:      return " [INFO]  |";
-            case WARN:      return " [WARN]  |";
-            case ERROR:     return " [ERROR] |";
-            case FATAL:     return " [FATAL] |";
-            default:        return " [-----] |";
+            case TRACE:     return "[TRACE] ";
+            case DEBUG:     return "[DEBUG] ";
+            case INFO:      return "[INFO]  ";
+            case WARN:      return "[WARN]  ";
+            case ERROR:     return "[ERROR] ";
+            case FATAL:     return "[FATAL] ";
+            default:        return "[-----] ";
         }
     }
 
