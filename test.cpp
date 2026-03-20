@@ -17,13 +17,12 @@ int main (){
     Loggr loggr("logs", "ppw", "output.txt", true, false, true);
 
     // Last argument is an array of optional values defined in LogOptions
-    loggr.log(moody::Loggr::Level::INFO,    "RENDERER", "TESTING", {});
-    loggr.log(moody::Loggr::Level::INFO,    "RENDERER", "TESTING", {__FILE__});
-    loggr.log(moody::Loggr::Level::TRACE,   "APP",      "TESTING", &test.one, {__FILE__, __LINE__});
-    loggr.log(moody::Loggr::Level::DEBUG,   "WINDOW",   "TESTING", &test.two, {__FILE__, __LINE__});
-    loggr.log(moody::Loggr::Level::WARN,    "GRAPHICS", "TESTING", &x, {__FILE__, __LINE__});
-    loggr.log(moody::Loggr::Level::ERROR,   "TEXTURE",  "TESTING", &y, {__FILE__, __LINE__});
-    loggr.log(moody::Loggr::Level::FATAL,   "CLIENT",   "TESTING", &z, {__FILE__, __LINE__});
+    LOG_INFO(loggr, "CLIENT", "TESTING");
+    LOG_TRACE(loggr, "APP", "TESTING", &z);
+    LOG_DEBUG(loggr, "RENDERER", "TESTING", &x);
+    LOG_WARN(loggr, "GRAPHICS", "TESTING", &test.two, test.one);
+    LOG_ERROR(loggr, "TEXTURE", "TESTING", &test);
+    LOG_FATAL(loggr, "CLIENT", "TESTING", &x);
 
     return 0;
 }
