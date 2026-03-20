@@ -137,7 +137,7 @@ namespace moody{
 
     // Support no variable arguments (USED FOR CONSOLE RUNTIME OUTPUT)
     void log(const Level level, const std::string& module, const std::string& msg, const FileSourceInfo& src){
-
+        
         LogMessage log = construct(level, module, msg, src);
 
         // Push to queue
@@ -192,9 +192,9 @@ private:
 
         oss << timestamp()
             << toStr(level)
-            << "[" + module + "] "
-            << "file:" << src.filename << "(" << std::to_string(src.line) << ") "
-            << "log:" << output
+            << format_module(module)
+            << format_filedesc(src)
+            << format_msg(output)
             << "\n";
 
         temp_log.message = oss.str();
@@ -212,7 +212,7 @@ private:
         return temp_log;
     }
 
-    LogMessage trace(const Level level, const std::string& module, const std::string &output, const FileSourceInfo& src, const LogOptions& optionals){
+    LogMessage trace(const Level level, const std::string& module, const std::string &output, const FileSourceInfo& src , const LogOptions& optionals){
         LogMessage temp_log;
         temp_log.level = level;
 
@@ -220,10 +220,10 @@ private:
         
         oss << timestamp()
             << toStr(level)
-            << "[" << module << "] "
-            << "file:" << src.filename << "(" << std::to_string(src.line) << ") "
-            << format(optionals) << " "
-            << "log:" << output 
+            << format_module(module)
+            << format_filedesc(src)
+            << format_opts(optionals)
+            << format_msg(output)
             << "\n";
 
         // Constructed message from stream
@@ -249,10 +249,10 @@ private:
         
         oss << timestamp()
             << toStr(level)
-            << "[" << module << "] "
-            << "file:" << src.filename << "(" << std::to_string(src.line) << ") "
-            << format(optionals) << " "
-            << "log:" << output 
+            << format_module(module)
+            << format_filedesc(src)
+            << format_opts(optionals)
+            << format_msg(output)
             << "\n";
 
         // Constructed message from stream
@@ -278,10 +278,10 @@ private:
         
         oss << timestamp()
             << toStr(level)
-            << "[" << module << "] "
-            << "file:" << src.filename << "(" << std::to_string(src.line) << ") "
-            << format(optionals) << " "
-            << "log:" << output 
+            << format_module(module)
+            << format_filedesc(src)
+            << format_opts(optionals)
+            << format_msg(output)
             << "\n";
 
         // Constructed message from stream
@@ -307,10 +307,10 @@ private:
         
         oss << timestamp()
             << toStr(level)
-            << "[" << module << "] "
-            << "file:" << src.filename << "(" << std::to_string(src.line) << ") "
-            << format(optionals) << " "
-            << "log:" << output 
+            << format_module(module)
+            << format_filedesc(src)
+            << format_opts(optionals)
+            << format_msg(output)
             << "\n";
 
         // Constructed message from stream
@@ -336,10 +336,10 @@ private:
         
         oss << timestamp()
             << toStr(level)
-            << "[" << module << "] "
-            << "file:" << src.filename << "(" << std::to_string(src.line) << ") "
-            << format(optionals) << " "
-            << "log:" << output 
+            << format_module(module)
+            << format_filedesc(src)
+            << format_opts(optionals)
+            << format_msg(output)
             << "\n";
 
         // Constructed message from stream
@@ -390,16 +390,61 @@ private:
         return oss.str();
     }
 
-    std::string format(const LogOptions& optionals){
+    std::string format_opts(const LogOptions& optionals){
         
         std::ostringstream oss;
+        std::string prefix = "var:{";
+        std::string suffix = "}";
+        std::string midfix = ":";
 
-        oss << "vars: ";
+        // Add prefix 
+        oss << prefix;
 
-        for (size_t i = 0; i < optionals.values.size(); ++i){
-            oss << optionals.values[i];
+        if (optionals.values.size() > 1){
+            for (size_t i = 0; i < optionals.values.size(); ++i){
+                if (i % 2 == 0){
+                    oss << optionals.values[i];
+                }
+                else oss << midfix << optionals.values[i]; 
+            }
+            oss << suffix; 
+        }
+        else if (optionals.values.size() <= 1){
+            for (size_t i = 0; i < optionals.values.size(); ++i){
+              oss << optionals.values[i];
+            }
+            oss << suffix;
         }
 
+        return oss.str();
+    }
+    std::string format_module(const std::string& module_str){
+        int min_width = 12;
+        size_t size = module_str.size();
+        int calc_width = (min_width - size) / 2;
+
+        std::ostringstream oss;
+        std::cout << size;
+
+        std::string prefix = "[";
+        std::string suffix = "]";
+
+        // Format string
+        oss << prefix << std::setw(8) << module_str << suffix << " ";
+
+        return oss.str();
+    }
+    std::string format_filedesc(const FileSourceInfo& src){
+        std::ostringstream oss;
+        oss << "in:" << src.filename << "(" << std::to_string(src.line) << ") ";
+        return oss.str();
+    }
+
+    std::string format_msg(const std::string& output){
+        std::ostringstream oss;
+        std::string prefix = "msg:{";
+        std::string suffix = "}";
+        oss << prefix << output << suffix;
         return oss.str();
     }
 
@@ -417,8 +462,8 @@ private:
         switch(level){
             case TRACE:     return "[TRACE] ";
             case DEBUG:     return "[DEBUG] ";
-            case INFO:      return "[INFO]  ";
-            case WARN:      return "[WARN]  ";
+            case INFO:      return "[ INFO] ";
+            case WARN:      return "[ WARN] ";
             case ERROR:     return "[ERROR] ";
             case FATAL:     return "[FATAL] ";
             default:        return "[-----] ";
