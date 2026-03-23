@@ -11,62 +11,12 @@ Moody Loggr is a lightweight, header-only C++ logging library designed for quick
 
 Clone or copy Loggr.hpp and test with the program provided below.
 
-## Testing
+## Testing releases
 
-```cpp
-#include "moody/Loggr.hpp"
+Link to [latest](https://github.com/bubba-94/loggr/releases)
+- Test program found under each release.
 
-using namespace moody;
-
-int main (){
-
-    struct Test{
-        double two;
-        int one;
-    };
-
-    Test test {13.3, 7};
-    int x = 1337;
-    double y = 9.4;
-    std::string host = "bubba94";
-    
-    Loggr loggr("logs", "test", "output.txt", true, false, true);
-
-    // No variables provided is used for outputting info.
-    loggr.log(moody::Loggr::Level::INFO, "CLIENT", "TESTING", {__FILE__, __LINE__});
-
-    // Variable arguments are sent in pairs
-    // Value of varaible: x
-    loggr.log(moody::Loggr::Level::TRACE, "APP",    "TESTING", {__FILE__, __LINE__}, "x", x); 
-
-    // Values of variables: test.one, test.two
-    loggr.log(moody::Loggr::Level::DEBUG, "RENDERER", "TESTING", {__FILE__, __LINE__}, "test.two", test.two, "test.one", test.one);
-
-    // Value of variable: name
-    loggr.log(moody::Loggr::Level::WARN, "GRAPHICS", "TESTING", {__FILE__, __LINE__}, "host", z); 
-    
-    // Value of varaible: y
-    loggr.log(moody::Loggr::Level::ERROR, "TEXTURE", "TESTING", {__FILE__, __LINE__}, "y", y);  
-    
-    // Adress of variable: y
-    loggr.log(moody::Loggr::Level::FATAL, "CONFIG", "TESTING", {__FILE__, __LINE__}, "&y", &y); 
-
-    return 0;
-}
-```
-
-### Output from above program
-```bash
-# The terminal window will add matching coloring
-<timestamp> [ INFO] [  CLIENT  ] in:test.cpp(20) msg:{TESTING}
-<timestamp> [TRACE] [   APP    ] in:test.cpp(21) var:{x=1337} msg:{TESTING}
-<timestamp> [DEBUG] [ RENDERER ] in:test.cpp(22) vars:{test.one=13.3:test.two=7} msg:{TESTING}
-<timestamp> [ WARN] [ GRAPHICS ] in:test.cpp(23) var:{name=bubba94} msg:{TESTING}
-<timestamp> [ERROR] [ TEXTURE  ] in:test.cpp(24) var:{y=9.4} msg:{TESTING}
-<timestamp> [FATAL] [  CONFIG  ] in:test.cpp(25) var:{&y=<address>} msg:{TESTING}
-```
-
-## Core features
+## Core features supported in v.0.1.0
 
 Logging levels: Supports INFO, TRACE, DEBUG, WARN, ERROR, and FATAL.
 
@@ -77,8 +27,7 @@ Logging levels: Supports INFO, TRACE, DEBUG, WARN, ERROR, and FATAL.
 - [x] Async logging: Logs are enqueued and processed accordingly.
 - [x] Creation of just one log message.
 - [x] Integrate into existing application.
-- [x] Optimize the optional parameter to prepare for scaling and performance.
-
+- [x] Optimize the optional parameter to prepare for scaling and performance. 
 
 ## Planned extension
 
@@ -93,4 +42,3 @@ Logging levels: Supports INFO, TRACE, DEBUG, WARN, ERROR, and FATAL.
 - [ ] Sensitive data filtering: Redact passwords, tokens, or PII.
 - [ ] Rate limiting / throttling: Prevent log spam in high-frequency code paths.
 - [ ] Extensible API for new sinks: Network logging (HTTP, syslog), database, or in-memory.
-- [ ] Distributed tracing support: Optional integration with Trace ID / Span ID for distributed systems.
