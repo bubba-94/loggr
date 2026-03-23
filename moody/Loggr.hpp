@@ -386,54 +386,58 @@ private:
     template <typename T>
     std::string stringify(T&& value){
         std::ostringstream oss;
-        oss << value << " ";
+        oss << value;
         return oss.str();
     }
 
-    std::string format_opts(const LogOptions& optionals){
-        
-        std::ostringstream oss;
-        std::string prefix = "var:{";
-        std::string suffix = "}";
-        std::string midfix = ":";
+    std::string format_opts(const LogOptions& optionals) {
+    std::ostringstream oss;
+    size_t length = optionals.values.size();
 
-        // Add prefix 
-        oss << prefix;
-
-        if (optionals.values.size() > 1){
-            for (size_t i = 0; i < optionals.values.size(); ++i){
-                if (i % 2 == 0){
-                    oss << optionals.values[i];
-                }
-                else oss << midfix << optionals.values[i]; 
-            }
-            oss << suffix; 
-        }
-        else if (optionals.values.size() <= 1){
-            for (size_t i = 0; i < optionals.values.size(); ++i){
-              oss << optionals.values[i];
-            }
-            oss << suffix;
-        }
-
-        return oss.str();
+    if (length > 2){
+        oss << "vars:{";
     }
-    std::string format_module(const std::string& module_str){
-        int min_width = 12;
+    else oss << "var:{";
+
+    for (size_t i = 0; i < length; i += 2) {
+        oss << optionals.values[i];
+
+        if (i + 1 < length) {
+            oss << "=" << optionals.values[i + 1];
+        }
+
+        if (i + 2 < length) {
+            oss << ":";
+        }
+    }
+
+    oss << "} ";
+    return oss.str();
+}
+    std::string format_module(const std::string& module_str) {
+        const int min_width = 10;
         size_t size = module_str.size();
-        int calc_width = (min_width - size) / 2;
+
+        if (size > min_width) {
+            return "ERROR";
+        }
+        
+        // Paddings
+        int total_padding = min_width - size;
+        int left_padding = total_padding / 2;
+        int right_padding = total_padding - left_padding;
 
         std::ostringstream oss;
-        std::cout << size;
 
-        std::string prefix = "[";
-        std::string suffix = "]";
-
-        // Format string
-        oss << prefix << std::setw(8) << module_str << suffix << " ";
+        oss << "["
+            << std::string(left_padding, ' ')
+            << module_str
+            << std::string(right_padding, ' ')
+            << "] ";
 
         return oss.str();
     }
+
     std::string format_filedesc(const FileSourceInfo& src){
         std::ostringstream oss;
         oss << "in:" << src.filename << "(" << std::to_string(src.line) << ") ";

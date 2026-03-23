@@ -9,20 +9,32 @@ int main (){
         int one;
     };
 
-    Test test {2.0, 2};
+    Test test {13.3, 7};
     int x = 1337;
-    double y = 0.0;
-    std::string z = "JOHAN";
+    double y = 9.4;
+    std::string host = "bubba94";
     
-    Loggr loggr("logs", "ppw", "output.txt", true, false, true);
+    Loggr loggr("logs", "test", "output.txt", true, false, true);
 
-    // Last argument is an array of optional values defined in LogOptions
+    // No variables provided is used for outputting info.
     loggr.log(moody::Loggr::Level::INFO, "CLIENT", "TESTING", {__FILE__, __LINE__});
-    loggr.log(moody::Loggr::Level::TRACE, "APP",    "TESTING", {__FILE__, __LINE__}, "x", x);
-    loggr.log(moody::Loggr::Level::DEBUG, "RENDERER", "TESTING", {__FILE__, __LINE__}, &test.one, test.one, &test.two);
-    loggr.log(moody::Loggr::Level::WARN, "GRAPHICS", "TESTING", {__FILE__, __LINE__}, "z", z);
-    loggr.log(moody::Loggr::Level::ERROR, "TEXTURE", "TESTING", {__FILE__, __LINE__}, &y);
-    loggr.log(moody::Loggr::Level::FATAL, "CONFIG", "TESTING", {__FILE__, __LINE__}, y);
+
+    // Variable arguments are sent in pairs
+    // Value of varaible: x
+    loggr.log(moody::Loggr::Level::TRACE, "APP",    "TESTING", {__FILE__, __LINE__}, "x", x); 
+
+    // Values of variables: test.one, test.two
+    loggr.log(moody::Loggr::Level::DEBUG, "RENDERER", "TESTING", {__FILE__, __LINE__}, "test.two", test.two, "test.one", test.one);
+
+    // Value of variable: name
+    loggr.log(moody::Loggr::Level::WARN, "GRAPHICS", "TESTING", {__FILE__, __LINE__}, "host", host); 
+    
+    // Value of varaible: y
+    loggr.log(moody::Loggr::Level::ERROR, "TEXTURE", "TESTING", {__FILE__, __LINE__}, "y", y);  
+    
+    // Adress of variable: y
+    loggr.log(moody::Loggr::Level::FATAL, "CONFIG", "TESTING", {__FILE__, __LINE__}, "&y", &y); 
 
     return 0;
 }
+
