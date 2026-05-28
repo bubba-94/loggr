@@ -1,40 +1,74 @@
 #include "moody/Loggr.hpp"
 
+#include <string>
+
 using namespace moody;
 
-int main (){
+/*  
+    Expected output: 
+    
+    logs/test/output.txt
+    logs/test/modules/CLIENT.log
+    logs/test/modules/APP.log
+    logs/test/modules/RENDERER.log
+    logs/test/modules/GRAPHICS.log
+    logs/test/modules/TEXTURE.log
+    logs/test/modules/CONFIG.log
+    logs/test/modules/PARSER.log
+    logs/test/modules/ENGINE.log
+*/
 
-    struct Test{
+int main()
+{
+    struct Test {
         double two;
         int one;
     };
 
-    Test test {13.3, 7};
+    Test test{13.3, 7};
+
     int x = 1337;
     double y = 9.4;
     std::string host = "bubba94";
-    
-    Loggr loggr("logs", "test", "output.txt", true, false, true);
 
-    // No variables provided is used for outputting info.
-    loggr.log(moody::Loggr::Level::INFO, "CLIENT", "TESTING", {__FILE__, __LINE__});
+    Loggr loggr(
+        "logs",
+        "test",
+        "output.txt",
+        true,   // console output
+        true,   // append
+        true,   // colored console
+        true    // millisecond timestamps
+    );
 
-    // Variable arguments are sent in pairs
-    // Value of varaible: x
-    loggr.log(moody::Loggr::Level::TRACE, "APP",    "TESTING", {__FILE__, __LINE__}, "x", x); 
+    loggr.set_level(Loggr::TRACE);
 
-    // Values of variables: test.one, test.two
-    loggr.log(moody::Loggr::Level::DEBUG, "RENDERER", "TESTING", {__FILE__, __LINE__}, "test.two", test.two, "test.one", test.one);
+    // Test global + per-module logging
+    loggr.set_file_mode(Loggr::FileMode::SingleFileAndPerModule);
 
-    // Value of variable: name
-    loggr.log(moody::Loggr::Level::WARN, "GRAPHICS", "TESTING", {__FILE__, __LINE__}, "host", host); 
-    
-    // Value of varaible: y
-    loggr.log(moody::Loggr::Level::ERROR, "TEXTURE", "TESTING", {__FILE__, __LINE__}, "y", y);  
-    
-    // Adress of variable: y
-    loggr.log(moody::Loggr::Level::FATAL, "CONFIG", "TESTING", {__FILE__, __LINE__}, "&y", &y); 
+    LOG_INFO(loggr, "CLIENT", "Testing info log");
+
+    LOG_TRACE(loggr, "APP", "Testing trace log", "x", x);
+
+    LOG_DEBUG(loggr, "RENDERER", "Testing debug log", "test.two", test.two, "test.one", test.one);
+
+    LOG_WARN(loggr, "GRAPHICS", "Testing warn log", "host", host);
+
+    LOG_ERROR(loggr, "TEXTURE", "Testing error log", "y", y);
+
+    LOG_FATAL(loggr, "CONFIG", "Testing fatal log", "&y", &y);
+
+    // Test odd optional argument count
+    LOG_DEBUG(loggr, "PARSER", "Testing missing optional value", "orphan_key");
+
+    // Test changing timestamp precision at runtime
+    loggr.set_milliseconds(false);
+    LOG_INFO(loggr, "ENGINE", "Testing timestamp without milliseconds");
+
+    loggr.set_milliseconds(true);
+    LOG_INFO(loggr, "ENGINE", "Testing timestamp with milliseconds");
+
+    loggr.flush();
 
     return 0;
 }
-
