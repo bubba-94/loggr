@@ -7,27 +7,90 @@ MIT License
 
 ---
 
+# Table of Contents
+
+* [Description](#description)
+* [Features](#features)
+* [Requirements](#requirements)
+* [Project Structure](#project-structure)
+* [Installation](#installation)
+
+  * [Manual Integration](#manual-integration)
+  * [Git Submodule](#git-submodule)
+* [Building](#building)
+* [Quick Start](#quick-start)
+* [Logging Macros](#logging-macros)
+* [Compile-Time Logging Guard](#compile-time-logging-guard)
+* [File Output Modes](#file-output-modes)
+* [Structured Log Format](#structured-log-format)
+* [Optional Variables](#optional-variables)
+* [Log Levels](#log-levels)
+* [CMake Configuration](#cmake-configuration)
+
+  * [Root Workspace CMake](#root-workspace-cmake)
+  * [Moody Library CMake](#moody-library-cmake)
+* [Supported Features](#supported-features)
+* [Planned Extensions](#planned-extensions)
+* [Current Status](#current-status)
+
+---
+
 # Description
 
-Moody Loggr is a lightweight C++ logging library designed for quick integration into modern C++ projects.
+Moody Loggr is a lightweight asynchronous C++ logging library designed for quick integration into modern C++ projects.
 
-The goal is to provide a lightweight asynchronous and thread-safe logger focused on:
+The library focuses on:
 
-* readable structured logging
-* file + console output
-* ANSI colored logs
-* real-time-friendly timestamps
-* simple integration into existing projects
+* asynchronous logging
+* thread safety
+* structured formatting
+* readable output
+* modular logging
+* real-time-friendly logging architecture
+* simple integration into existing codebases
 
-All logging is performed asynchronously through a single internal worker thread. Producer threads enqueue log events and never write directly to sinks.
+Log events are pushed into a thread-safe queue and processed independently by an internal worker thread.
 
-The formatter is designed to remain human-readable while also preparing the logger for future structured formats such as JSON.
+This minimizes blocking on producer threads and makes the logger suitable for:
+
+* MIDI systems
+* game engines
+* audio software
+* parsers
+* simulations
+* modular real-time systems
 
 Example output:
 
 ```text
 2026-05-28 09:00:06.381 [DEBUG] [PARSER] [Parser.cpp:24] msg:{Handling system real-time byte} <byte=248>
 ```
+
+---
+
+# Features
+
+## Core Features
+
+* asynchronous producer/consumer logging
+* thread-safe queue architecture
+* internal worker thread
+* file logging
+* console logging
+* ANSI colored console output
+* configurable minimum log level
+* compile-time logging guard
+* structured readable formatting
+* module-aware logging
+* per-module log files
+* combined global + per-module logs
+* millisecond timestamp support
+* automatic source location capture
+* optional key/value variables
+* manual sink flushing
+* automatic directory creation
+* reusable CMake target
+* Doxygen documentation comments
 
 ---
 
@@ -39,7 +102,7 @@ Example output:
 
 ---
 
-# Current Project Structure
+# Project Structure
 
 ```text
 moody-loggr/
@@ -64,7 +127,9 @@ moody-loggr/
 
 Moody Loggr can be integrated manually or as a Git submodule.
 
-## Option 1: Manual Integration
+---
+
+## Manual Integration
 
 Copy the following files into your project:
 
@@ -81,7 +146,9 @@ Then include the logger:
 
 Make sure `Loggr.cpp` is compiled together with your project.
 
-## Option 2: Git Submodule
+---
+
+## Git Submodule
 
 Add Moody Loggr as a Git submodule:
 
@@ -90,7 +157,7 @@ git submodule add <repository-url> external/moody-loggr
 git submodule update --init --recursive
 ```
 
-Add the project to your CMake build:
+Add the logger to your project:
 
 ```cmake
 add_subdirectory(external/moody-loggr/moody)
@@ -102,7 +169,7 @@ target_link_libraries(your_target PRIVATE
 
 ---
 
-# Building Moody Loggr
+# Building
 
 Configure and build:
 
@@ -133,129 +200,6 @@ because log paths are resolved relative to the current working directory.
 
 ---
 
-# File Output Modes
-
-Moody Loggr supports multiple file output strategies.
-
-```cpp
-logger.set_file_mode(moody::Loggr::FileMode::SingleFile);
-logger.set_file_mode(moody::Loggr::FileMode::PerModule);
-logger.set_file_mode(moody::Loggr::FileMode::SingleFileAndPerModule);
-```
-
-## SingleFile
-
-Writes all log events to one chronological file.
-
-```text
-logs/music_engine/engine.log
-```
-
-This is useful for seeing the full application timeline.
-
-## PerModule
-
-Writes log events only to module-specific files.
-
-```text
-logs/music_engine/modules/PARSER.log
-logs/music_engine/modules/ANALYZER.log
-logs/music_engine/modules/ARRANGER.log
-logs/music_engine/modules/ENGINE.log
-```
-
-This is useful when debugging one subsystem at a time.
-
-## SingleFileAndPerModule
-
-Writes each log event to both:
-
-```text
-logs/music_engine/engine.log
-```
-
-and:
-
-```text
-logs/music_engine/modules/PARSER.log
-logs/music_engine/modules/ANALYZER.log
-logs/music_engine/modules/ARRANGER.log
-logs/music_engine/modules/ENGINE.log
-```
-
-This mode is useful for pipelines such as:
-
-```text
-MIDI Parser -> MIDI Analyzer -> MIDI Arranger -> MusicEngineCore
-```
-
-It gives both:
-
-* a full chronological event history
-* module-specific log files
-
-Recommended for multi-stage systems:
-
-```cpp
-logger.set_file_mode(
-    moody::Loggr::FileMode::SingleFileAndPerModule
-);
-```
-
----
-
-# Root CMake Configuration
-
-```cmake
-cmake_minimum_required(VERSION 3.10)
-
-project(MoodyWorkspace)
-
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-add_subdirectory(moody)
-
-add_executable(loggr_test
-    test.cpp
-)
-
-target_link_libraries(loggr_test PRIVATE
-    moody::loggr
-)
-```
-
----
-
-# Moody Library CMake
-
-```cmake
-cmake_minimum_required(VERSION 3.10)
-
-project(moody_loggr
-    VERSION 0.3.0
-    LANGUAGES CXX
-)
-
-add_library(moody_loggr
-    src/Loggr.cpp
-)
-
-add_library(moody::loggr ALIAS moody_loggr)
-
-target_include_directories(moody_loggr
-    PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-)
-
-target_compile_features(moody_loggr
-    PUBLIC
-        cxx_std_17
-)
-```
-
----
-
 # Quick Start
 
 A complete usage example can be found in:
@@ -264,18 +208,7 @@ A complete usage example can be found in:
 test.cpp
 ```
 
-The example demonstrates:
-
-* logger creation
-* log levels
-* structured logging
-* optional variables
-* file output modes
-* colored console output
-* asynchronous logging
-* flushing sinks
-
-Build and run the example:
+Build and run:
 
 ```bash
 cmake -S . -B build
@@ -304,16 +237,21 @@ logger.set_file_mode(
 );
 
 LOG_INFO(logger, "PARSER", "Parsed MIDI message");
-LOG_INFO(logger, "ANALYZER", "Detected musical key");
-LOG_INFO(logger, "ARRANGER", "Generated arrangement section");
-LOG_INFO(logger, "ENGINE", "Scheduled MIDI event");
+
+LOG_DEBUG(
+    logger,
+    "ARRANGER",
+    "Generated phrase",
+    "notes", 42,
+    "velocity", 96
+);
 ```
 
 ---
 
 # Logging Macros
 
-Moody Loggr provides the following macros:
+Moody Loggr provides:
 
 ```cpp
 LOG_TRACE(...)
@@ -331,7 +269,187 @@ __FILE__
 __LINE__
 ```
 
-All logging macros are thread-safe and may be used from multiple threads simultaneously.
+All logging macros are thread-safe.
+
+---
+
+# Compile-Time Logging Guard
+
+Moody Loggr supports compile-time macro disabling through:
+
+```cpp
+MOODY_LOGGR_ENABLE_LOGGING
+```
+
+When disabled, logging macros compile to:
+
+```cpp
+((void)0)
+```
+
+This prevents:
+
+* log calls
+* formatting
+* argument evaluation
+
+Example:
+
+```cpp
+LOG_DEBUG(
+    logger,
+    "PARSER",
+    "Parsed byte",
+    "byte",
+    expensiveFunction()
+);
+```
+
+When logging is disabled:
+
+```cpp
+expensiveFunction()
+```
+
+is never executed.
+
+---
+
+## Enable Logging
+
+```bash
+cmake -S . -B build -DMOODY_LOGGR_ENABLE_LOGGING=ON
+cmake --build build
+```
+
+---
+
+## Disable Logging
+
+```bash
+cmake -S . -B build -DMOODY_LOGGR_ENABLE_LOGGING=OFF
+cmake --build build
+```
+
+---
+
+## Header Macro Guard
+
+`Loggr.hpp` uses:
+
+```cpp
+#ifndef MOODY_LOGGR_ENABLE_LOGGING
+#define MOODY_LOGGR_ENABLE_LOGGING 1
+#endif
+
+#if MOODY_LOGGR_ENABLE_LOGGING
+
+// logging macros
+
+#else
+
+// no-op macros
+
+#endif
+```
+
+---
+
+## Runtime vs Compile-Time Filtering
+
+### Runtime filtering
+
+```cpp
+logger.set_level(moody::Loggr::WARN);
+```
+
+Ignores lower-severity messages while keeping logging active.
+
+### Compile-time disabling
+
+```bash
+-DMOODY_LOGGR_ENABLE_LOGGING=OFF
+```
+
+Completely removes logging macros from the build.
+
+---
+
+# File Output Modes
+
+Moody Loggr supports:
+
+```cpp
+logger.set_file_mode(moody::Loggr::FileMode::SingleFile);
+
+logger.set_file_mode(moody::Loggr::FileMode::PerModule);
+
+logger.set_file_mode(
+    moody::Loggr::FileMode::SingleFileAndPerModule
+);
+```
+
+---
+
+## SingleFile
+
+Writes all events to one chronological log:
+
+```text
+logs/music_engine/engine.log
+```
+
+---
+
+## PerModule
+
+Writes events only to module-specific logs:
+
+```text
+logs/music_engine/modules/PARSER.log
+logs/music_engine/modules/ANALYZER.log
+logs/music_engine/modules/ARRANGER.log
+logs/music_engine/modules/ENGINE.log
+```
+
+---
+
+## SingleFileAndPerModule
+
+Writes events to both:
+
+* global log
+* module logs
+
+Useful for multi-stage pipelines:
+
+```text
+MIDI Parser
+    ↓
+MIDI Analyzer
+    ↓
+MIDI Arranger
+    ↓
+MusicEngineCore
+```
+
+Recommended for modular systems.
+
+---
+
+# Structured Log Format
+
+Current format:
+
+```text
+YYYY-MM-DD HH:MM:SS.mmm [LEVEL] [MODULE] [File.cpp:line] msg:{Message} <key=value>
+```
+
+Example:
+
+```text
+2026-05-28 09:00:06.381 [DEBUG] [RENDERER] [Renderer.cpp:24] msg:{Render picture} <testVar=234>
+```
 
 ---
 
@@ -361,56 +479,11 @@ Output:
 <note=64, velocity=127>
 ```
 
-If an odd number of optional values is passed:
+Odd argument counts are handled automatically:
 
 ```text
 <key=<missing>>
 ```
-
-is printed automatically.
-
----
-
-# Structured Log Format
-
-Current format:
-
-```text
-YYYY-MM-DD HH:MM:SS.mmm [LEVEL] [MODULE] [File.cpp:line] msg:{Message} <key=value>
-```
-
-Example:
-
-```text
-2026-05-28 09:00:06.381 [DEBUG] [RENDERER] [Renderer.cpp:24] msg:{Render picture} <testVar=234>
-```
-
----
-
-# Supported Features
-
-## Core Features
-
-* [x] Lightweight C++ logging library
-* [x] Separate public header and implementation file
-* [x] Asynchronous logging
-* [x] Thread-safe producer/consumer architecture
-* [x] Internal background worker thread
-* [x] File logging
-* [x] Per-module file logging
-* [x] Combined global + per-module file logging
-* [x] Console logging
-* [x] Optional ANSI colored console output
-* [x] Automatic log directory creation
-* [x] Append or overwrite file output
-* [x] Configurable minimum log level
-* [x] Manual `flush()` support
-* [x] Optional millisecond timestamps
-* [x] Filename-only source location formatting
-* [x] Automatic `__FILE__` and `__LINE__` capture through macros
-* [x] Structured readable log format
-* [x] Optional key/value variables
-* [x] Doxygen-style documentation comments
 
 ---
 
@@ -426,19 +499,109 @@ FATAL
 OFF
 ```
 
+Example:
+
+```cpp
+logger.set_level(moody::Loggr::WARN);
+```
+
+---
+
+# CMake Configuration
+
+---
+
+## Root Workspace CMake
+
+```cmake
+cmake_minimum_required(VERSION 3.10)
+
+project(MoodyWorkspace)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+option(MOODY_LOGGR_ENABLE_LOGGING
+    "Enable Moody Loggr logging macros"
+    ON
+)
+
+add_subdirectory(moody)
+
+add_executable(loggr_test
+    test.cpp
+)
+
+target_link_libraries(loggr_test PRIVATE
+    moody::loggr
+)
+```
+
+---
+
+## Moody Library CMake
+
+```cmake
+cmake_minimum_required(VERSION 3.10)
+
+project(moody_loggr
+    VERSION 0.3.0
+    LANGUAGES CXX
+)
+
+add_library(moody_loggr
+    src/Loggr.cpp
+)
+
+add_library(moody::loggr ALIAS moody_loggr)
+
+target_include_directories(moody_loggr
+    PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
+target_compile_features(moody_loggr
+    PUBLIC
+        cxx_std_17
+)
+
+target_compile_definitions(moody_loggr
+    PUBLIC
+        MOODY_LOGGR_ENABLE_LOGGING=$<BOOL:${MOODY_LOGGR_ENABLE_LOGGING}>
+)
+```
+
+---
+
+# Supported Features
+
+* [x] Asynchronous logging
+* [x] Thread-safe producer/consumer architecture
+* [x] Internal worker thread
+* [x] File logging
+* [x] Per-module logging
+* [x] Combined global + module logging
+* [x] ANSI colored console output
+* [x] Structured formatting
+* [x] Millisecond timestamps
+* [x] Automatic source capture
+* [x] Compile-time logging guards
+* [x] Runtime log filtering
+* [x] Doxygen documentation comments
+* [x] Reusable CMake target
+* [x] Submodule integration support
+
 ---
 
 # Planned Extensions
 
-* [ ] JSON output format
+* [ ] JSON output
 * [ ] Multiple sinks
 * [ ] Rotating file sink
 * [ ] Pattern-based formatting
-* [ ] Compile-time log level filtering
+* [ ] Thread-local context propagation
 * [ ] Sensitive data filtering
-* [ ] Rate limiting / throttling
-* [ ] Thread-local logging context
-* [ ] Extensible sink API
+* [ ] Rate limiting
 * [ ] Network/syslog/database sinks
 
 ---

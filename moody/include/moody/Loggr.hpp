@@ -19,26 +19,45 @@
 #include <vector>
 #include <filesystem>
 
+#ifndef MOODY_LOGGR_ENABLE_LOGGING
+#define MOODY_LOGGR_ENABLE_LOGGING 1
+#endif
+
+#if MOODY_LOGGR_ENABLE_LOGGING
+
 #define CONSTRUCT_LOG(object, level, module, msg, ...) \
-    (object).log(level, module, msg, {__FILE__, __LINE__}, ##__VA_ARGS__)
+(object).log(level, module, msg, {__FILE__, __LINE__}, ##__VA_ARGS__)
 
 #define LOG_TRACE(object, module, msg, ...) \
-    CONSTRUCT_LOG(object, moody::Loggr::Level::TRACE, module, msg, ##__VA_ARGS__)
+CONSTRUCT_LOG(object, moody::Loggr::Level::TRACE, module, msg, ##__VA_ARGS__)
 
 #define LOG_DEBUG(object, module, msg, ...) \
-    CONSTRUCT_LOG(object, moody::Loggr::Level::DEBUG, module, msg, ##__VA_ARGS__)
+CONSTRUCT_LOG(object, moody::Loggr::Level::DEBUG, module, msg, ##__VA_ARGS__)
 
 #define LOG_INFO(object, module, msg, ...) \
-    CONSTRUCT_LOG(object, moody::Loggr::Level::INFO, module, msg, ##__VA_ARGS__)
+CONSTRUCT_LOG(object, moody::Loggr::Level::INFO, module, msg, ##__VA_ARGS__)
 
 #define LOG_WARN(object, module, msg, ...) \
-    CONSTRUCT_LOG(object, moody::Loggr::Level::WARN, module, msg, ##__VA_ARGS__)
+CONSTRUCT_LOG(object, moody::Loggr::Level::WARN, module, msg, ##__VA_ARGS__)
 
 #define LOG_ERROR(object, module, msg, ...) \
-    CONSTRUCT_LOG(object, moody::Loggr::Level::ERROR, module, msg, ##__VA_ARGS__)
+CONSTRUCT_LOG(object, moody::Loggr::Level::ERROR, module, msg, ##__VA_ARGS__)
 
 #define LOG_FATAL(object, module, msg, ...) \
-    CONSTRUCT_LOG(object, moody::Loggr::Level::FATAL, module, msg, ##__VA_ARGS__)
+CONSTRUCT_LOG(object, moody::Loggr::Level::FATAL, module, msg, ##__VA_ARGS__)
+
+#else
+
+#define CONSTRUCT_LOG(object, level, module, msg, ...) ((void)0)
+
+#define LOG_TRACE(object, module, msg, ...) ((void)0)
+#define LOG_DEBUG(object, module, msg, ...) ((void)0)
+#define LOG_INFO(object, module, msg, ...)  ((void)0)
+#define LOG_WARN(object, module, msg, ...)  ((void)0)
+#define LOG_ERROR(object, module, msg, ...) ((void)0)
+#define LOG_FATAL(object, module, msg, ...) ((void)0)
+
+#endif
 
 namespace moody {
 
