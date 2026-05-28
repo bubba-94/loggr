@@ -20,3 +20,8 @@ target_compile_features(moody_loggr
     PUBLIC
         cxx_std_17
 )
+
+target_compile_definitions(moody_loggr
+    PUBLIC
+        MOODY_LOGGR_ENABLE_LOGGING=$<BOOL:${MOODY_LOGGR_ENABLE_LOGGING}>
+)
